@@ -52,7 +52,7 @@ Edit `.env` with your repository details:
 
 ```bash
 GIT_REPO_URL=https://github.com/your-org/knowledge-base.git
-GIT_BRANCH=main
+GIT_REF=main
 DOCS_SUBPATH=docs
 ```
 
@@ -127,7 +127,7 @@ Once merged to main, git-sync will automatically pull the changes (within the co
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `GIT_REPO_URL` | required | Repository URL to sync |
-| `GIT_BRANCH` | `main` | Branch to track |
+| `GIT_REF` | `main` | Git ref (branch/tag/hash) to sync |
 | `DOCS_SUBPATH` | `.` | Subdirectory containing docs |
 | `SYNC_PERIOD` | `60s` | Git sync interval |
 | `MEMORY_SYNC_PERIOD` | `300` | Re-index interval (seconds) |

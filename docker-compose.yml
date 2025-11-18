@@ -6,7 +6,7 @@ services:
     container_name: git-sync
     environment:
       - GITSYNC_REPO=${GIT_REPO_URL}
-      - GITSYNC_BRANCH=${GIT_BRANCH:-main}
+      - GITSYNC_REF=${GIT_REF:-main}
       - GITSYNC_ROOT=/data/git
       - GITSYNC_LINK=current
       - GITSYNC_PERIOD=${SYNC_PERIOD:-60s}
@@ -49,7 +49,7 @@ services:
         basic-memory sync &&
 
         echo 'Starting MCP server via supergateway on port 8000...' &&
-        npx -y supergateway --stdio 'basic-memory mcp' --port 8000
+        npx -y supergateway --stdio 'basic-memory mcp' --port 8000 --baseUrl http://localhost:8000
       "
     ports:
       - "${MCP_PORT:-8000}:8000"
