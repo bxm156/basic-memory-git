@@ -41,8 +41,8 @@ MCP_TRANSPORT="${MCP_TRANSPORT:-stdio}"
 
 if [ "$MCP_TRANSPORT" = "sse" ]; then
     echo "Starting MCP server via supergateway (SSE mode) on port 8000..."
-    exec supergateway --stdio "basic-memory mcp" --port 8000 --baseUrl "http://localhost:8000"
+    exec supergateway --stdio "basic-memory mcp" --port 8000 --baseUrl "http://localhost:8000" "$@"
 else
     echo "Starting MCP server (stdio mode)..."
-    exec basic-memory mcp
+    exec basic-memory mcp "$@"
 fi
