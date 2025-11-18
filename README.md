@@ -64,37 +64,9 @@ docker-compose up -d
 
 ### 3. Connect Claude Code
 
-**Option A: SSE Mode (Remote/Shared)**
+**Option A: stdio Mode (Local, Default)**
 
-For shared server or litellm proxy integration, use SSE mode (default):
-
-```bash
-# In .env
-MCP_TRANSPORT=sse
-```
-
-Configure Claude Code:
-
-```json
-{
-  "mcpServers": {
-    "org-knowledge": {
-      "url": "http://localhost:8000/sse"
-    }
-  }
-}
-```
-
-**Option B: stdio Mode (Local)**
-
-For local use without HTTP overhead:
-
-```bash
-# In .env
-MCP_TRANSPORT=stdio
-```
-
-Configure Claude Code to run the container directly:
+For local use, configure Claude Code to run the container directly:
 
 ```json
 {
@@ -108,6 +80,33 @@ Configure Claude Code to run the container directly:
 ```
 
 Note: Replace `/path/to/docker-compose.yml` with the actual path to your compose file.
+
+**Option B: SSE Mode (Remote/Shared)**
+
+For shared server or litellm proxy integration:
+
+```bash
+# In .env
+MCP_TRANSPORT=sse
+```
+
+Start the services:
+
+```bash
+docker-compose up -d
+```
+
+Configure Claude Code:
+
+```json
+{
+  "mcpServers": {
+    "org-knowledge": {
+      "url": "http://localhost:8000/sse"
+    }
+  }
+}
+```
 
 ## Usage
 
