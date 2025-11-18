@@ -19,38 +19,27 @@ services:
       # For private repos with SSH key:
       # - ${SSH_KEY_PATH:-~/.ssh/id_rsa}:/etc/git-secret/ssh:ro
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "test", "-d", "/data/git/current"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
 
   basic-memory:
-    image: python:3.12-slim
+    build:
+      context: ./docker/basic-memory
+      dockerfile: Dockerfile
     container_name: basic-memory
     depends_on:
-      - git-sync
+      git-sync:
+        condition: service_healthy
     environment:
       - HOME=/data/memory
       - DOCS_SUBPATH=${DOCS_SUBPATH:-.}
     volumes:
       - docs-data:/data/git:ro
       - memory-data:/data/memory
-    command: >
-      bash -c "
-        apt-get update && apt-get install -y curl nodejs npm &&
-        pip install uv &&
-        uv tool install basic-memory &&
-        export PATH=\"$$HOME/.local/bin:$$PATH\" &&
-
-        echo 'Waiting for git-sync to complete initial clone...' &&
-        while [ ! -d /data/git/current ]; do sleep 2; done &&
-
-        echo 'Setting up basic-memory project...' &&
-        basic-memory project add org-docs /data/git/current/$$DOCS_SUBPATH &&
-        basic-memory project default org-docs &&
-
-        echo 'Running initial sync...' &&
-        basic-memory sync &&
-
-        echo 'Starting MCP server via supergateway on port 8000...' &&
-        npx -y supergateway --stdio 'basic-memory mcp' --port 8000 --baseUrl http://localhost:8000
-      "
     ports:
       - "${MCP_PORT:-8000}:8000"
     restart: unless-stopped
@@ -59,37 +48,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 120s
-
-  # Optional: Periodic re-sync when git-sync pulls new content
-  # Watches for changes and re-indexes
-  memory-sync:
-    image: python:3.12-slim
-    container_name: memory-sync
-    depends_on:
-      - basic-memory
-    environment:
-      - HOME=/data/memory
-      - SYNC_INTERVAL=${MEMORY_SYNC_PERIOD:-300}
-    volumes:
-      - docs-data:/data/git:ro
-      - memory-data:/data/memory
-    entrypoint: >
-      bash -c "
-        pip install uv &&
-        uv tool install basic-memory &&
-        export PATH=\"$$HOME/.local/bin:$$PATH\" &&
-
-        echo 'Waiting for basic-memory to initialize...' &&
-        sleep 60 &&
-
-        while true; do
-          sleep $$SYNC_INTERVAL
-          echo 'Re-syncing basic-memory index...'
-          basic-memory sync
-        done
-      "
-    restart: unless-stopped
+      start_period: 60s
 
 volumes:
   docs-data:

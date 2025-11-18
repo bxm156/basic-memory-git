@@ -130,7 +130,6 @@ Once merged to main, git-sync will automatically pull the changes (within the co
 | `GIT_REF` | `main` | Git ref (branch/tag/hash) to sync |
 | `DOCS_SUBPATH` | `.` | Subdirectory containing docs |
 | `SYNC_PERIOD` | `60s` | Git sync interval |
-| `MEMORY_SYNC_PERIOD` | `300` | Re-index interval (seconds) |
 | `MCP_PORT` | `8000` | SSE server port (supergateway) |
 
 ### Private Repositories
@@ -192,7 +191,7 @@ docker-compose logs basic-memory
 
 ### Force re-sync
 ```bash
-docker-compose restart memory-sync
+docker-compose restart basic-memory
 ```
 
 ### Verify content is accessible
