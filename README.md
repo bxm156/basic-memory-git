@@ -14,24 +14,31 @@ This project provides:
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────┐
-│           Docker Compose Stack              │
-├─────────────────────────────────────────────┤
-│  ┌───────────┐      ┌────────────────┐      │
-│  │ git-sync  │─────▶│ shared volume  │      │
-│  └───────────┘      └───────┬────────┘      │
-│                             │               │
-│                    ┌────────▼────────┐      │
-│                    │  basic-memory   │      │
-│                    │  (SSE :8765)    │      │
-│                    └────────┬────────┘      │
-└─────────────────────────────┼───────────────┘
+┌──────────────────────────────────────────────────┐
+│             Docker Compose Stack                 │
+├──────────────────────────────────────────────────┤
+│  ┌───────────┐      ┌────────────────┐           │
+│  │ git-sync  │─────▶│ shared volume  │           │
+│  └───────────┘      └───────┬────────┘           │
+│                             │                    │
+│                    ┌────────▼────────┐           │
+│                    │  basic-memory   │           │
+│                    │    (stdio)      │           │
+│                    └────────┬────────┘           │
+│                             │                    │
+│                    ┌────────▼────────┐           │
+│                    │  supergateway   │           │
+│                    │  (SSE :8000)    │           │
+│                    └────────┬────────┘           │
+└─────────────────────────────┼────────────────────┘
                               │
                     ┌─────────┴─────────┐
                     ▼                   ▼
               Claude Code          litellm proxy
                (local)              (shared)
 ```
+
+**Note**: basic-memory uses stdio transport. Supergateway wraps it to expose an SSE/HTTP endpoint for remote access.
 
 ## Quick Start
 
@@ -63,13 +70,13 @@ Add to your Claude Code MCP configuration:
 {
   "mcpServers": {
     "org-knowledge": {
-      "url": "http://localhost:8765/sse"
+      "url": "http://localhost:8000/sse"
     }
   }
 }
 ```
 
-Or if connecting through litellm proxy, configure your proxy to forward to `http://basic-memory:8765`.
+Or if connecting through litellm proxy, configure your proxy to forward to `http://basic-memory:8000`.
 
 ## Usage
 
@@ -124,7 +131,7 @@ Once merged to main, git-sync will automatically pull the changes (within the co
 | `DOCS_SUBPATH` | `.` | Subdirectory containing docs |
 | `SYNC_PERIOD` | `60s` | Git sync interval |
 | `MEMORY_SYNC_PERIOD` | `300` | Re-index interval (seconds) |
-| `MCP_PORT` | `8765` | SSE server port |
+| `MCP_PORT` | `8000` | SSE server port (supergateway) |
 
 ### Private Repositories
 
@@ -138,17 +145,40 @@ Ensure the key has read access to the repository.
 
 ## Local Development Mode
 
-For local development without Docker, mount your local docs directory directly:
+For local development without Docker, you can run basic-memory directly:
 
 ```bash
-# Install basic-memory
-pip install basic-memory
+# Install basic-memory (requires Python 3.12+)
+uv tool install basic-memory
+
+# Create a project pointing to your docs directory
+basic-memory project add my-docs /path/to/your/docs
+basic-memory project default my-docs
 
 # Sync your local docs
-basic-memory sync /path/to/your/docs
+basic-memory sync
 
-# Start the MCP server
-basic-memory mcp --transport sse --port 8765
+# Start the MCP server (stdio transport)
+basic-memory mcp
+```
+
+To expose it over SSE for remote access, use supergateway:
+
+```bash
+npx -y supergateway --stdio "basic-memory mcp" --port 8000
+```
+
+For Claude Desktop (local), configure stdio directly in `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "basic-memory": {
+      "command": "uvx",
+      "args": ["basic-memory", "mcp"]
+    }
+  }
+}
 ```
 
 ## Troubleshooting
@@ -167,7 +197,7 @@ docker-compose restart memory-sync
 
 ### Verify content is accessible
 ```bash
-curl http://localhost:8765/health
+curl http://localhost:8000/sse
 ```
 
 ## Roadmap
