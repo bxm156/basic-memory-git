@@ -39,6 +39,7 @@ services:
     environment:
       - HOME=/data/memory
       - DOCS_SUBPATH=${DOCS_SUBPATH:-.}
+      - MCP_TRANSPORT=${MCP_TRANSPORT:-sse}
     volumes:
       - docs-data:/data/git:ro
       - memory-data:/data/memory
