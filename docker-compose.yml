@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   git-sync:
-    image: registry.k8s.io/git-sync/git-sync:v4.2.4
+    image: registry.k8s.io/git-sync/git-sync:v4.5.0
     container_name: git-sync
     environment:
       - GITSYNC_REPO=${GIT_REPO_URL}
@@ -11,11 +11,15 @@ services:
       - GITSYNC_LINK=current
       - GITSYNC_PERIOD=${SYNC_PERIOD:-60s}
       - GITSYNC_ONE_TIME=${ONE_TIME_SYNC:-false}
-      # For private repos, uncomment and configure:
+      # For sparse checkout (only clone specific paths):
+      # - GITSYNC_SPARSE_CHECKOUT_FILE=/etc/git-sync/sparse-checkout
+      # For private repos:
       # - GITSYNC_SSH_KEY_FILE=/etc/git-secret/ssh
       # - GITSYNC_SSH_KNOWN_HOSTS=false
     volumes:
       - docs-data:/data/git
+      # For sparse checkout, mount your sparse-checkout file:
+      # - ./sparse-checkout:/etc/git-sync/sparse-checkout:ro
       # For private repos with SSH key:
       # - ${SSH_KEY_PATH:-~/.ssh/id_rsa}:/etc/git-secret/ssh:ro
     restart: unless-stopped

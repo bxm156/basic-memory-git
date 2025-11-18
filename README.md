@@ -142,6 +142,26 @@ SSH_KEY_PATH=/path/to/your/private/key
 
 Ensure the key has read access to the repository.
 
+### Sparse Checkout (Large Repos)
+
+For large repositories, use sparse checkout to clone only specific paths:
+
+1. Create a `sparse-checkout` file:
+   ```
+   docs/
+   knowledge-base/
+   ```
+
+2. Uncomment the sparse checkout lines in `docker-compose.yml`:
+   ```yaml
+   environment:
+     - GITSYNC_SPARSE_CHECKOUT_FILE=/etc/git-sync/sparse-checkout
+   volumes:
+     - ./sparse-checkout:/etc/git-sync/sparse-checkout:ro
+   ```
+
+This downloads only the specified paths instead of the entire repository.
+
 ## Local Development Mode
 
 For local development without Docker, you can run basic-memory directly:
