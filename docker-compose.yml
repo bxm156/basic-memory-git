@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  git-sync:
+    image: registry.k8s.io/git-sync/git-sync:v4.2.4
+    container_name: git-sync
+    environment:
+      - GITSYNC_REPO=${GIT_REPO_URL}
+      - GITSYNC_BRANCH=${GIT_BRANCH:-main}
+      - GITSYNC_ROOT=/data/git
+      - GITSYNC_LINK=current
+      - GITSYNC_PERIOD=${SYNC_PERIOD:-60s}
+      - GITSYNC_ONE_TIME=${ONE_TIME_SYNC:-false}
+      # For private repos, uncomment and configure:
+      # - GITSYNC_SSH_KEY_FILE=/etc/git-secret/ssh
+      # - GITSYNC_SSH_KNOWN_HOSTS=false
+    volumes:
+      - docs-data:/data/git
+      # For private repos with SSH key:
+      # - ${SSH_KEY_PATH:-~/.ssh/id_rsa}:/etc/git-secret/ssh:ro
+    restart: unless-stopped
+
+  basic-memory:
+    image: python:3.11-slim
+    container_name: basic-memory
+    depends_on:
+      - git-sync
+    environment:
+      - BASIC_MEMORY_HOME=/data/memory
+      - BASIC_MEMORY_SYNC_PERIOD=${MEMORY_SYNC_PERIOD:-300}
+    volumes:
+      - docs-data:/data/git:ro
+      - memory-data:/data/memory
+    ports:
+      - "${MCP_PORT:-8765}:8765"
+    command: >
+      bash -c "
+        pip install basic-memory &&
+        basic-memory sync /data/git/current/${DOCS_SUBPATH:-.} &&
+        basic-memory mcp --transport sse --port 8765 --host 0.0.0.0
+      "
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8765/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Optional: Periodic re-sync of basic-memory index
+  memory-sync:
+    image: python:3.11-slim
+    container_name: memory-sync
+    depends_on:
+      - basic-memory
+    environment:
+      - SYNC_INTERVAL=${MEMORY_SYNC_PERIOD:-300}
+    volumes:
+      - docs-data:/data/git:ro
+      - memory-data:/data/memory
+    entrypoint: >
+      bash -c "
+        pip install basic-memory &&
+        while true; do
+          sleep $$SYNC_INTERVAL
+          echo 'Re-syncing basic-memory index...'
+          basic-memory sync /data/git/current/${DOCS_SUBPATH:-.}
+        done
+      "
+    restart: unless-stopped
+
+volumes:
+  docs-data:
+    driver: local
+  memory-data:
+    driver: local
