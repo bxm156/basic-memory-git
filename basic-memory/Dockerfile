@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install supergateway (pinned version)
-RUN npm install -g supergateway@0.0.63
+RUN npm install -g supergateway@3.4.3
 
 # Create non-root user
 RUN useradd -m -u 1000 appuser
