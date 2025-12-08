@@ -6,3 +6,7 @@ __pycache__
 .venv
 *.pyc
 .DS_Store
+
+# Git-crypt key files (security)
+git-crypt-key
+*.key

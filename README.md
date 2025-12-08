@@ -142,6 +142,39 @@ SSH_KEY_PATH=/path/to/your/private/key
 
 Ensure the key has read access to the repository.
 
+### Encrypted Repositories (git-crypt)
+
+For repositories encrypted with [git-crypt](https://github.com/AGWA/git-crypt):
+
+1. **Export your symmetric key**:
+
+   ```bash
+   git-crypt export-key /path/to/git-crypt-key
+   ```
+
+2. **Secure the key file**:
+
+   ```bash
+   chmod 600 /path/to/git-crypt-key
+   ```
+
+3. **Configure in `.env`**:
+
+   ```bash
+   ENABLE_GIT_CRYPT=true
+   GIT_CRYPT_KEY_PATH=/path/to/git-crypt-key
+   ```
+
+4. **Start services**:
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+The `git-crypt-unlock` service will automatically decrypt files after git-sync clones the repository and before basic-memory indexes them.
+
+**Security**: Never commit the key file to git. It's already excluded via `.dockerignore`. Store the key file securely and share it only with authorized team members.
+
 ### Sparse Checkout (Large Repos)
 
 For large repositories, use sparse checkout to clone only specific paths:

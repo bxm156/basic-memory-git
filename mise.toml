@@ -1,0 +1,3 @@
+[tasks.dotfiles]
+description = "Install dotfiles"
+run = "curl -fsLS https://raw.githubusercontent.com/bxm156/dotfiles/main/install.sh | bash"

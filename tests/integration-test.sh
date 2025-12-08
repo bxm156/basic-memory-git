@@ -107,5 +107,19 @@ else
     exit 1
 fi
 
+# Test 4: Verify git-crypt-unlock service (if enabled)
+echo "Test 4: Checking git-crypt-unlock service..."
+if [ "$ENABLE_GIT_CRYPT" = "true" ]; then
+    if docker compose ps git-crypt-unlock | grep -q "exited (0)"; then
+        echo "✓ git-crypt-unlock completed successfully"
+    else
+        echo "✗ git-crypt-unlock did not complete successfully"
+        docker compose logs git-crypt-unlock
+        exit 1
+    fi
+else
+    echo "⊘ git-crypt disabled, skipping check"
+fi
+
 echo ""
 echo "=== All tests passed! ==="

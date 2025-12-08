@@ -30,12 +30,30 @@ services:
       retries: 30
       start_period: 10s
 
+  git-crypt-unlock:
+    build: ./git-crypt
+    container_name: git-crypt-unlock
+    depends_on:
+      git-sync:
+        condition: service_healthy
+    environment:
+      - ENABLE_GIT_CRYPT=${ENABLE_GIT_CRYPT:-false}
+      - GIT_CRYPT_KEY_PATH=/secrets/git-crypt-key
+    volumes:
+      - docs-data:/data/git  # Read-write to decrypt files in place
+      # Mount your git-crypt symmetric key file:
+      # Generate with: git-crypt export-key /path/to/git-crypt-key
+      - ${GIT_CRYPT_KEY_PATH:-/dev/null}:/secrets/git-crypt-key:ro
+    restart: on-failure
+
   basic-memory:
-    build: .
+    build: ./basic-memory
     container_name: basic-memory
     depends_on:
       git-sync:
         condition: service_healthy
+      git-crypt-unlock:
+        condition: service_completed_successfully
     environment:
       - HOME=/data/memory
       - DOCS_SUBPATH=${DOCS_SUBPATH:-.}
